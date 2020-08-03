@@ -1,30 +1,55 @@
 module.exports = {
-    createStore() {
-        // здесь должна быть реализация 
-    },
+  createStore(reducer, initialState, middlewares) {
+    function applyMiddleware(...middlewares) {
+      return (next) => (reducer, initialState) => {
+        const store = next(reducer, initialState);
 
-    combineReducers() {
-        // здесь должна быть реализация 
+        const middlewareAPI = {
+          getState: store.getState,
+          dispatch: (action) => dispatch(action),
+        };
+
+        const chain = middlewares.map((middleware) => middleware(middlewareAPI));
+        return {
+          ...store,
+          dispatch: [...chain, store.dispatch]
+        };
+      };
     }
-}
+    return new Redux(reducer, initialState, applyMiddleware(middlewares));
+  },
+
+  combineReducers() {
+    // здесь должна быть реализация
+  },
+};
 
 class Redux {
-    constructor() {
-        // здесь должна быть реализация
-    }
-    getState() {
-        // здесь должна быть реализация
-    }
+  constructor(reducer, initialState) {
+    this.reducer = reducer;
+    this.state = initialState;
+    this.subscribers = [];
+  }
+  getState() {
+    return this.state;
+  }
 
-    dispatch() {
-        // здесь должна быть реализация
-    }
+  dispatch(action) {
+    this.state = this.reducer(this.state, action);
+    this.subscribers.forEach((fn) => fn(this.value));
+  }
 
-    subscribe() {
-        // здесь должна быть реализация
-    }
+  subscribe(fn) {
+    this.subscribers = [...this.subscribers, fn];
 
-    unsubscribe() {
-        // здесь должна быть реализация
-    }
+    return () => {
+      this.subscribers = this.subscribers.filter(
+        (subscriber) => subscriber !== fn
+      );
+    };
+  }
+
+  unsubscribe(fn) {
+    // здесь должна быть реализация
+  }
 }
