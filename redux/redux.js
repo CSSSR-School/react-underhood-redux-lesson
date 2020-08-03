@@ -23,7 +23,6 @@ module.exports = {
         };
         chain = middlewares.map((middleware) => middleware(middlewareAPI));
         dispatch = compose(...chain)(store.dispatch);
-
         return {
           ...store,
           dispatch,
@@ -39,9 +38,10 @@ module.exports = {
 };
 
 class Redux {
-  constructor(reducer, initialState) {
+  constructor(reducer, initialState, enhancer) {
     this.reducer = reducer;
     this.state = initialState;
+    this.enhancer = enhancer;
     this.subscribers = [];
   }
   getState() {
@@ -50,11 +50,11 @@ class Redux {
 
   dispatch(action) {
     this.state = this.reducer(this.state, action);
-    this.subscribers.forEach((fn) => fn(this.value));
+    this.subscribers.forEach((fn) => fn(this.state));
   }
 
   subscribe(fn) {
-    this.subscribers = [...this.subscribers, fn];
+    this.subscribers.push(fn)
 
     return () => {
       this.subscribers = this.subscribers.filter(
