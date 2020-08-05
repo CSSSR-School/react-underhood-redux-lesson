@@ -82,7 +82,7 @@ describe("Redux должен быть инициализирован", () => {
             expect(store.getState()).toEqual({ value: 1 });
         });
     
-        it.only('Мидлвар должен быть обернут с dispatch только один раз', () => {
+        it('Мидлвар должен быть обернут с dispatch только один раз', () => {
             function test(spyOnMethods) {
                 return methods => {
                   spyOnMethods(methods)

@@ -1,35 +1,44 @@
 module.exports = {
   createStore(reducer, initialState, middlewares) {
-    function compose(...funcs) {
-      if (funcs.length === 0) {
-        return (arg) => arg;
+    // function compose(...funcs) {
+    //   if (funcs.length === 0) {
+    //     return (arg) => arg;
+    //   }
+
+    //   if (funcs.length === 1) {
+    //     return funcs[0];
+    //   }
+
+    //   return funcs.reduce((a, b) => (...args) => a(b(...args)));
+    // }
+    // function applyMiddleware(...middlewares) {
+    //   return (createStore) => (reducer, preloadedState, enhancer) => {
+    //     const store = createStore(reducer, preloadedState, enhancer);
+    //     let dispatch = store.dispatch;
+    //     let chain = [];
+
+    //     const middlewareAPI = {
+    //       getState: store.getState,
+    //       dispatch: (action) => dispatch(action),
+    //     };
+    //     chain = middlewares.map((middleware) => middleware(middlewareAPI));
+    //     dispatch = compose(...chain)(store.dispatch);
+    //     return {
+    //       ...store,
+    //       dispatch,
+    //     };
+    //   };
+    // }
+    function applyMiddleware2(store, middlewares) {
+        middlewares = middlewares.slice()
+        middlewares.reverse()
+        let dispatch = store.dispatch
+        middlewares.forEach(middleware => (dispatch = middleware(store)(dispatch)))
+        return Object.assign({}, store, { dispatch })
       }
-
-      if (funcs.length === 1) {
-        return funcs[0];
-      }
-
-      return funcs.reduce((a, b) => (...args) => a(b(...args)));
-    }
-    function applyMiddleware(...middlewares) {
-      return (createStore) => (reducer, preloadedState, enhancer) => {
-        const store = createStore(reducer, preloadedState, enhancer);
-        let dispatch = store.dispatch;
-        let chain = [];
-
-        const middlewareAPI = {
-          getState: store.getState,
-          dispatch: (action) => dispatch(action),
-        };
-        chain = middlewares.map((middleware) => middleware(middlewareAPI));
-        dispatch = compose(...chain)(store.dispatch);
-        return {
-          ...store,
-          dispatch,
-        };
-      };
-    }
-    return new Redux(reducer, initialState, applyMiddleware(middlewares));
+    const store = new Redux(reducer, initialState);
+    if (middlewares) applyMiddleware2(store, middlewares)
+    return store;
   },
 
   combineReducers() {
@@ -38,10 +47,9 @@ module.exports = {
 };
 
 class Redux {
-  constructor(reducer, initialState, enhancer) {
+  constructor(reducer, initialState) {
     this.reducer = reducer;
     this.state = initialState;
-    this.enhancer = enhancer;
     this.subscribers = [];
   }
   getState() {
@@ -54,7 +62,7 @@ class Redux {
   }
 
   subscribe(fn) {
-    this.subscribers.push(fn)
+    this.subscribers.push(fn);
 
     return () => {
       this.subscribers = this.subscribers.filter(
