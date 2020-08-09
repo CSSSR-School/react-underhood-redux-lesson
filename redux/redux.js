@@ -1,48 +1,35 @@
 module.exports = {
   createStore(reducer, initialState, middlewares) {
-    // function compose(...funcs) {
-    //   if (funcs.length === 0) {
-    //     return (arg) => arg;
-    //   }
 
-    //   if (funcs.length === 1) {
-    //     return funcs[0];
-    //   }
-
-    //   return funcs.reduce((a, b) => (...args) => a(b(...args)));
-    // }
-    // function applyMiddleware(...middlewares) {
-    //   return (createStore) => (reducer, preloadedState, enhancer) => {
-    //     const store = createStore(reducer, preloadedState, enhancer);
-    //     let dispatch = store.dispatch;
-    //     let chain = [];
-
-    //     const middlewareAPI = {
-    //       getState: store.getState,
-    //       dispatch: (action) => dispatch(action),
-    //     };
-    //     chain = middlewares.map((middleware) => middleware(middlewareAPI));
-    //     dispatch = compose(...chain)(store.dispatch);
-    //     return {
-    //       ...store,
-    //       dispatch,
-    //     };
-    //   };
-    // }
-    function applyMiddleware2(store, middlewares) {
-        middlewares = middlewares.slice()
-        middlewares.reverse()
-        let dispatch = store.dispatch
-        middlewares.forEach(middleware => (dispatch = middleware(store)(dispatch)))
-        return Object.assign({}, store, { dispatch })
-      }
+    function applyMiddleware(store, middlewares) {
+      let dispatch = store.dispatch;
+      middlewares.forEach((middleware) => {
+        dispatch = middleware(store)(dispatch)
+      });
+      return {
+        ...store,
+        dispatch,
+      };
+    }
     const store = new Redux(reducer, initialState);
-    if (middlewares) applyMiddleware2(store, middlewares)
+    if (middlewares) applyMiddleware(store, middlewares);
     return store;
   },
 
-  combineReducers() {
-    // здесь должна быть реализация
+  combineReducers(reducers) {
+    return (state = {}, action) => {
+      const nextState = {};
+      Object.entries(reducers).forEach((reducer) => {
+        const key = reducer[0];
+        const fn = reducer[1];
+        if (typeof fn !== "function") return;
+        const result = fn(state[key], action);
+        if (typeof result === "undefined")
+          throw new TypeError(`An undefined reducer!`);
+        nextState[key] = result;
+      });
+      return nextState;
+    };
   },
 };
 
@@ -59,6 +46,7 @@ class Redux {
   dispatch(action) {
     this.state = this.reducer(this.state, action);
     this.subscribers.forEach((fn) => fn(this.state));
+    if (typeof action === 'function') return action(this.state) 
   }
 
   subscribe(fn) {
