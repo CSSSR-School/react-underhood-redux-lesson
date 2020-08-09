@@ -1,9 +1,35 @@
-import React from 'react'
+import React from "react";
 
-export const ReactReduxContext = null // здесь должна быть реализация
+export const ReactReduxContext = React.createContext(null);
 
-function Provider() {
-    return null; // здесь должна быть реализация
-}
+// function Provider({store, children}) {
+//   return <ReactReduxContext.Provider value={store}>
+//       {children}
+//   </ReactReduxContext.Provider>;
+// }
 
+class Provider extends React.Component {
+    constructor(props) {
+      super(props)
+  
+      const { store } = props
+  
+      this.state = {
+        storeState: store.getState(),
+        store
+      }
+    }
+
+  
+    render() {
+      const Context = this.props.context || ReactReduxContext
+  
+      return (
+        <Context.Provider value={this.state}>
+          {this.props.children}
+        </Context.Provider>
+      )
+    }
+  }
+  
 export default Provider;
