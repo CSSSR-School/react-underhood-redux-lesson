@@ -36,7 +36,8 @@ module.exports = {
 class Redux {
   constructor(reducer, initialState) {
     this.reducer = reducer;
-    this.state = initialState || typeof reducer === 'function' && reducer();
+    this.reducer = this.reducer.bind(this);
+    this.state = initialState || reducer();
     this.subscribers = [];
   }
   getState() {
