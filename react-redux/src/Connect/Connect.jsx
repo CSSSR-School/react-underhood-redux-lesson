@@ -9,27 +9,37 @@ export default function connect(mapStateToProps, mapDispatchToProps) {
         this.renderHoccedComponent = this.renderHoccedComponent.bind(this);
       }
 
-      listener = (params) => {
-        this.setState(params);
-      };
+      listener(newState) {
+        this.setState(newState);
+      }
 
       componentDidMount() {
-        let value = this.context;
-        const stateFromStore = value.getState();
+        let store = this.context;
+        store.subscribe(this.listener.bind(this));
+        const stateFromStore = store.getState();
         this.setState(mapStateToProps(stateFromStore));
       }
 
       componentDidUpdate() {
-        let value = this.context;
-        const stateFromStore = value.getState();
+        let store = this.context;
+        const stateFromStore = store.getState();
         this.setState(mapStateToProps(stateFromStore));
+      }
+
+      componentWillUnmount() {
+        let store = this.context;
+        const unsubscribe = store.subscribe(this.listener);
+        unsubscribe();
       }
 
       renderHoccedComponent(store) {
         const dispatch =
           mapDispatchToProps && mapDispatchToProps(store.dispatch.bind(store));
-        return <HoccedComponent {...this.state} {...dispatch} />;
+        return (
+          <HoccedComponent {...this.props} {...this.state} {...dispatch} />
+        );
       }
+
       render() {
         return (
           <ReactReduxContext.Consumer>
